@@ -4,9 +4,342 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width"/>
 <title>My test page</title>
+<style>
+    *{box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    }
+    body{
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        background: #f0f2f5;
+        padding:20px; 
+        color:#333;      
+    }
+    .container{
+        max-width: 800px;
+        margin: 0 auto;
+        background:white;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 2px rgba(0,0,0,0.1);
+    }
+    h1{
+        margin-bottom: 24px;
+        color: #1a1a1a;
+        border-bottom: 2px solid #1890ff;
+        padding-bottom: 12px;
+    }
+    .form-group{
+        margin-bottom: 20px;
+    }
+    label{
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #555;
+    }
+    input,select,textarea{
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+    input:focus,select:focus,textarea:focus
+    {
+        border-color: #1890ff;
+        outline:none;
+        box-shadow:0 0 0 2px rgba(24,144,255,0.2);
+    }
+    .skills-container{
+        display: flex;
+        flex-wrap: wrap;
+        gap:8px;
+        margin-top: 8px;
+        min-height: 32px;
+    }
+    .skill-tag{
+        background:#f6ffed;
+        border: 1px solid #b7eb8f;
+        color:#52c41a;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.3s;
+    }
+    .skill-tag:hover{
+        background: #ff4d4f;
+        border-color:#dd4d4f ;
+        color: white;
+    }
+    .btn-group{
+        display:flex;
+        gap: 12px;
+        margin-top: 24px;
+    }
+    button{
+        padding:10px 20px;
+        border:none;
+        border-radius:4px;
+        cursor: pointer;
+        font-size:14px;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+    .btn-primary{
+        background: #1890ff;
+        color: white;
+    }
+    .btn-primary:hover{
+        background: #40a9ff;
+    }
+    .btn-default{
+        background: white;
+        border: 1px solid #d9d9d9;
+        color: #333;
+    }
+    .btn-default:hover{
+        border-color: #1890ff;
+        color: #1890ff;
+    }
+    .preview-panel{
+        margin-top: 24px;
+        padding: 16px;
+        background: #f6ffed;
+        border-left: 4px solid #52c41a;
+        border-radius: 4px;
+        font-family: 'Consolas','Monaco',monospace;
+        font-size: 13px;
+        display: none;
+    }
+    .preview-panel.active {
+        display: block;
+    }
+    .status-bar.success{
+        background: #f6ffed;
+        border: 1px solid #b7eb8f;
+        color: #52c41a;
+        display: block;
+    }
+    .status-bar.error{
+        background: #fff1f0;
+        color: #ff4d4f;
+        border: 1px solid #ff4d4f;
+        display: block;
+    }
+</style>
 </head>
 <body>
 <img src="images/OIP.webp" alt="My test image" />
-<h1>L，是我赢了</h1>
+<form class="container">
+    <h1>基米简历管理器</h1>
+    <div class="form-group">
+     <label>Name*</label>
+     <input type="text" id="inputName" required placeholder="请输入姓名">
+    </div>
+    <div class="form-group">
+     <label>Email*</label>
+     <input type="email" id="inputEmail" required placeholder="请输入电子邮箱">
+</div>
+<div class="form-group">
+    <label>year of birth</label>
+    <input type="number" id="inputBirth" placeholder="请输入出生年份">
+</div>
+<div class="form-group">
+    <label>Education</label>
+    <select id="inputEducation">
+        <option value="">请选择学历</option>
+        <option value="highschool">高中</option>
+        <option value="bachelor">本科</option>
+        <option value="master">硕士</option>
+        <option value="doctor">博士</option>
+    </select>
+</div>
+<div class="form-group">
+    <label>Skills</label>
+    <input type="text" id="inputSkill" placeholder="请输入技能并按回车">
+    <div class="skills-container" id="skillsBox"></div>
+</div>
+<div class="form-group">
+  <label>Introduction</label>
+  <textarea id="inputIntro" rows="4" placeholder="请输入自我介绍"></textarea>
+</div>
+<div class="btn-group">
+    <button type="button" class="btn-primary" onclick="jimiResumeManager.save()">保存</button>
+    <button type="button" class="btn-default" onclick="jimiResumeManager.load()">加载</button>
+    <button type="button" class="btn-default" onclick="jimiResumeManager.reset()">重置</button>
+</div>
+<div id="statusBar" class="status-bar"></div>
+</form>
+<div id="previewPanel" class="preview-panel">
+    <strong>预览:</strong>
+    <pre id="jsonPreview"></pre>
+</div>
+<script>
+    class JIMIResumeManager {
+        constructor() {
+            this.data = {
+                name: "",
+                email: "",
+                birth: "",
+                education: "",
+                skills: [],
+                intro: ""
+            };
+            this.dom = {
+                name: document.getElementById("inputName"),
+                email: document.getElementById("inputEmail"),
+                birth: document.getElementById("inputBirth"),
+                education: document.getElementById("inputEducation"),
+                skillInput: document.getElementById("inputSkill"),
+                skillsBox: document.getElementById("skillsBox"),
+                intro: document.getElementById("inputIntro"),
+                preview: document.getElementById("previewPanel"),
+                jsonPre: document.getElementById("jsonPreview"),
+                status: document.getElementById("statusBar")
+            };
+            this.initEvents();
+            this.load();
+        }
+        
+        initEvents() {
+            this.dom.skillInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    this.addSkill(this.dom.skillInput.value.trim());
+                    this.dom.skillInput.value = "";
+                }
+            });
+        }
+        
+        addSkill(skill) {
+            const trimmed = skill.trim();
+            if (!trimmed || this.data.skills.includes(trimmed)) {
+                this.showStatus("技能不能为空或已存在", "error");
+                return;
+            }
+            this.data.skills.push(trimmed);
+            this.renderSkills();
+        }
+        
+        removeSkill(index) {
+            this.data.skills = this.data.skills.filter((_, i) => i !== index);
+            this.renderSkills();
+        }
+        
+        renderSkills() {
+            const html = this.data.skills.map((skill, index) => `
+            <span class="skill-tag" onclick="jimiResumeManager.removeSkill(${index})">${this.escapeHtml(skill)}</span>
+            `).join("");
+            this.dom.skillsBox.innerHTML = html || "<span style='color:#999'>暂无技能</span>";
+        }
+        
+        save() {
+            this.data = {
+                name: this.dom.name.value,
+                email: this.dom.email.value,
+                birth: this.dom.birth.value,
+                education: this.dom.education.value,
+                intro: this.dom.intro.value,
+                skills: this.data.skills,
+                updateAt: new Date().toISOString()
+            };
+            if (!this.validate()) return;
+            try {
+                localStorage.setItem("jimiResumeData", JSON.stringify(this.data));
+                this.showStatus("保存成功", "success");
+                this.showPreview();
+            } catch (error) {
+                this.showStatus("保存失败", "error");
+            }
+        }
+        
+        load() {
+            try {
+                const saved = localStorage.getItem("jimiResumeData");
+                if (!saved) return;
+                const {
+                    name = "",
+                    email = "",
+                    birth = null,
+                    education = "",
+                    skills = [],
+                    intro = ""
+                } = JSON.parse(saved);
+                this.dom.name.value = name;
+                this.dom.email.value = email;
+                this.dom.birth.value = birth || "";
+                this.dom.education.value = education;
+                this.data.skills = skills;
+                this.dom.intro.value = intro;
+                this.renderSkills();
+                this.showStatus("加载成功", "success");
+            } catch (error) {
+                this.showStatus("加载失败", "error");
+            }
+        }
+        
+        reset() {
+            if (!confirm("确定要重置吗？这将清除所有数据。")) return;
+            this.data = {
+                name: "",
+                email: "",
+                birth: "",
+                education: "",
+                skills: [],
+                intro: ""
+            };
+            this.dom.name.value = "";
+            this.dom.email.value = "";
+            this.dom.birth.value = "";
+            this.dom.education.value = "";
+            this.dom.intro.value = "";
+            this.renderSkills();
+            this.showStatus("重置成功", "success");
+        }
+        
+        validate() {
+            const { name, email } = this.data;
+            if (!name || !email) {
+                this.showStatus("姓名和电子邮箱为必填项", "error");
+                return false;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                this.showStatus("请输入有效的电子邮箱地址", "error");
+                return false;
+            }
+            return true;
+        }
+        
+        showStatus(msg, type) {
+            this.dom.status.textContent = msg;
+            this.dom.status.className = `status-bar ${type}`;
+            setTimeout(() => {
+                this.dom.status.className = "status-bar";
+                this.dom.status.textContent = "";
+            }, 3000);
+        }
+        
+        showPreview() {
+            this.dom.jsonPre.textContent = JSON.stringify(this.data, null, 2);
+            this.dom.preview.classList.add('active');
+        }
+        
+        escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    }
+    
+    const jimiResumeManager = new JIMIResumeManager();
+    window.jimiResumeManager = jimiResumeManager;
+</script>
 </body>
 </html>
